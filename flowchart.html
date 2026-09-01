@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>항공 예매 스윔레인</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      background: #f0f4f8;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 32px;
+    }
+    h2 {
+      text-align: center;
+      color: #1e293b;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      margin-bottom: 32px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #3b82f6;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e0e7ff;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>항공 예매 스윔레인 예시</h2>
+  <p class="subtitle">예약/결제 흐름 — 각 참여자(모듈)가 레인이 됩니다</p>
+
+  <div class="card">
+    <div class="card-title">① 검색 흐름</div>
+    <div class="mermaid">
+sequenceDiagram
+  actor 사용자
+  participant FE as Frontend
+  participant FS as Flight Service
+  participant IS as Inventory Service
+  participant CD as Core Data
+
+  사용자->>FE: 출발지/목적지/날짜 입력
+  FE->>CD: 공항 코드 조회 (IATA)
+  CD-->>FE: 공항 정보 반환
+  FE->>FS: 항공편 검색 요청
+  FS->>IS: 잔여 좌석 확인
+  IS-->>FS: 좌석 수 반환
+  FS-->>FE: 항공편 목록 + 운임 반환
+  FE-->>사용자: 검색 결과 표시
+
+  alt 결과 없음
+    FS-->>FE: 빈 결과
+    FE-->>사용자: 대안 날짜 추천
+  end
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">② 예약/결제 흐름</div>
+    <div class="mermaid">
+sequenceDiagram
+  actor 사용자
+  participant FE as Frontend
+  participant Auth as Auth Service
+  participant CS as Customer Service
+  participant IS as Inventory Service
+  participant BS as Booking Service
+  participant PS as Payment Service
+
+  사용자->>FE: 항공편 선택
+  FE->>Auth: 로그인 상태 확인
+  alt 비로그인
+    Auth-->>FE: 인증 필요
+    FE-->>사용자: 로그인 요청
+    사용자->>FE: 로그인
+    FE->>Auth: 인증 처리
+    Auth-->>FE: 토큰 발급
+  end
+
+  FE->>IS: 좌석 홀드 요청
+  IS-->>FE: 홀드 성공 (TTL: 15분)
+
+  사용자->>FE: 탑승자 정보 입력
+  FE->>CS: 승객 정보 저장/조회
+  CS-->>FE: 승객 정보 반환
+
+  사용자->>FE: 결제 요청
+  FE->>PS: PG 결제 요청
+  alt 결제 실패
+    PS-->>FE: 실패 응답
+    FE-->>사용자: 오류 안내 / 재시도
+  else 결제 성공
+    PS-->>FE: 승인 완료
+    FE->>BS: PNR 생성 요청 (탑승자+여정+요금 스냅샷)
+    BS->>IS: 좌석 홀드 → 확정
+    IS-->>BS: 확정 완료
+    BS-->>FE: PNR 반환
+    FE-->>사용자: 예약 완료
+  end
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">③ 예약 관리 흐름 (변경/취소)</div>
+    <div class="mermaid">
+sequenceDiagram
+  actor 사용자
+  participant FE as Frontend
+  participant BS as Booking Service
+  participant PS as Payment Service
+  participant IS as Inventory Service
+  participant PO as Policy Service
+  participant NS as Notification Service
+
+  사용자->>FE: 예약 조회
+  FE->>BS: PNR로 예약 조회
+  BS-->>FE: 예약 상세 반환
+
+  alt 예약 취소
+    사용자->>FE: 취소 요청
+    FE->>PO: 환불 규정 조회
+    PO-->>FE: 위약금 / 환불 금액 반환
+    FE-->>사용자: 환불 금액 안내
+    사용자->>FE: 취소 확정
+    FE->>BS: 취소 처리
+    BS->>IS: 좌석 반환
+    BS->>PS: 환불 요청
+    PS-->>BS: 환불 완료
+    BS->>NS: 취소 알림 발송 (async)
+    BS-->>FE: 취소 완료
+  else 예약 변경
+    사용자->>FE: 날짜/좌석 변경 요청
+    FE->>PO: 변경 수수료 조회
+    PO-->>FE: 수수료 반환
+    FE->>IS: 새 좌석 홀드
+    IS-->>FE: 홀드 성공
+    FE->>BS: 변경 확정
+    BS->>NS: 변경 알림 발송 (async)
+    BS-->>FE: 변경 완료
+  end
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#3b82f6',
+        primaryTextColor: '#1e293b',
+        primaryBorderColor: '#93c5fd',
+        secondaryColor: '#f0f9ff',
+        tertiaryColor: '#f8fafc',
+        noteBkgColor: '#fef9c3',
+        signalColor: '#374151',
+        actorBkg: '#1e40af',
+        actorTextColor: '#ffffff',
+        actorBorder: '#1e3a8a',
+        activationBkgColor: '#dbeafe',
+      },
+      sequence: {
+        diagramMarginX: 20,
+        diagramMarginY: 20,
+        actorMargin: 60,
+        width: 160,
+        height: 40,
+        boxMargin: 10,
+        useMaxWidth: true,
+      }
+    });
+  </script>
+</body>
+</html>

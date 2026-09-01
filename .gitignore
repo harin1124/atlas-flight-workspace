@@ -1,0 +1,26 @@
+# ─────────────────────────────────────────────────────────────
+# atlas-flight-workspace (메타 레포)
+# 공용 툴링만 추적한다. 아래는 추적 대상에서 제외.
+# ─────────────────────────────────────────────────────────────
+
+# 모듈 — 각각 독립 GitHub 레포 (여기서 추적하지 않음)
+atlas-flight-auth/
+atlas-flight-booking/
+atlas-flight-core-data/
+atlas-flight-core-lib/
+atlas-flight-customer/
+atlas-flight-flightway/
+atlas-flight-frontend/
+atlas-flight-gateway/
+atlas-flight-policy/
+
+# 세션/작업 단위 임시 산출물 (커밋 안 함)
+_workspace/
+
+# 개인 로컬 설정 (팀 공유 대상 아님)
+.claude/settings.local.json
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
