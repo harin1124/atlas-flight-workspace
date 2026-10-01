@@ -4,15 +4,7 @@
 # ─────────────────────────────────────────────────────────────
 
 # 모듈 — 각각 독립 GitHub 레포 (여기서 추적하지 않음)
-atlas-flight-auth/
-atlas-flight-booking/
-atlas-flight-core-data/
-atlas-flight-core-lib/
-atlas-flight-customer/
-atlas-flight-flightway/
-atlas-flight-frontend/
-atlas-flight-gateway/
-atlas-flight-policy/
+/atlas-flight-*/
 
 # 세션/작업 단위 임시 산출물 (커밋 안 함)
 _workspace/
