@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
 # sync.sh — 모든 모듈을 현재 활성화된 브랜치 기준으로 동기화
+#   대상: 스크립트 위치에서 atlas-flight-* 폴더 중 git 저장소인 것 (SYNC_PREFIX 로 접두사 변경 가능)
 #   각 저장소마다:
 #     1) fetch --all --prune  → 새 브랜치 반영 + 삭제된 원격 브랜치 정리(브랜치 목록 최신화)
 #     2) pull --ff-only       → 현재 브랜치를 빨리 감기로만 갱신(머지 커밋 방지)
@@ -22,14 +23,28 @@ else
   BOLD=; DIM=; RESET=; RED=; GREEN=; YELLOW=; BLUE=; CYAN=; GRAY=
 fi
 
-MODULES=(
-  atlas-flight-auth
-  atlas-flight-core-data
-  atlas-flight-core-lib
-  atlas-flight-customer
-  atlas-flight-frontend
-  atlas-flight-gateway
-)
+# ── 모듈 탐색: 접두사로 시작하는 폴더 중 git 저장소만 대상 ─────────
+# 메타 레포 자체가 git 저장소라 rev-parse 는 하위 폴더도 참으로 판정하므로,
+# 폴더 바로 아래 .git 존재 여부로 판별한다 (worktree 의 .git 파일도 인정).
+PREFIX="${SYNC_PREFIX:-atlas-flight-}"
+MODULES=(); EXCLUDED=()
+for p in "$PREFIX"*/; do
+  [ -d "$p" ] || continue
+  p="${p%/}"
+  if [ -e "$p/.git" ]; then
+    MODULES+=("$p")
+  else
+    EXCLUDED+=("$p")
+  fi
+done
+
+if [ ${#EXCLUDED[@]} -gt 0 ]; then
+  printf "${DIM}git 저장소가 아니라 제외: %s${RESET}\n" "${EXCLUDED[*]}"
+fi
+if [ ${#MODULES[@]} -eq 0 ]; then
+  printf "${YELLOW}⚠ '%s*' 로 시작하는 git 저장소가 없습니다.${RESET}\n" "$PREFIX"
+  exit 0
+fi
 
 # 요약용 병렬 배열
 declare -a S_NAME S_BRANCH S_KIND S_NOTE
@@ -44,13 +59,6 @@ print_header() {
 
 for d in "${MODULES[@]}"; do
   print_header "$d"
-
-  if [ ! -d "$d/.git" ]; then
-    printf "  ${YELLOW}⚠ git 저장소가 아님 — 건너뜀${RESET}\n"
-    S_NAME+=("$d"); S_BRANCH+=("-"); S_KIND+=("SKIP"); S_NOTE+=("git 아님")
-    ((n_skip++))
-    continue
-  fi
 
   branch="$(git -C "$d" rev-parse --abbrev-ref HEAD 2>/dev/null)"
   printf "  ${GRAY}브랜치${RESET}  ${CYAN}%s${RESET}\n" "$branch"
