@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+#
+# commit-msg — 커밋 메시지가 docs/commit-convention.md 규약을 따르는지 검사
+#   설치: scripts/install-git-hooks.sh (메타 레포 + 모든 atlas-flight-* 모듈의 core.hooksPath 설정)
+#   우회: git commit --no-verify
+#
+# 형식
+#   type(module): 제목
+#
+#   - 상세 항목 1
+#   - 상세 항목 2
+#
+# 검사 항목
+#   1) 제목 형식  type(module): 제목   (type 은 허용 목록 중 하나, 콜론 뒤 공백 1칸)
+#   2) module 은 현재 저장소 이름에서 atlas-flight- 를 뺀 값 (메타 레포는 workspace)
+#   3) 제목에 한글 포함
+#   4) 모든 줄 끝에 마침표(.)·쉼표(,) 금지
+#   5) 제목·본문의 서술형 어미(~다, ~요) 금지 — 개조식 여부는 휴리스틱으로 명백한 서술형만 잡는다
+#   6) 제목과 본문 사이 빈 줄
+#   7) 본문의 모든 줄은 "- " 로 시작 (Co-Authored-By 같은 trailer 는 제외)
+
+set -uo pipefail
+export LC_ALL=en_US.UTF-8
+
+MSG_FILE="$1"
+TYPES="feat|fix|refactor|chore|perf|style|docs|test|build|ci|revert"
+PREFIX="atlas-flight-"
+
+if [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
+  BOLD=$'\033[1m'; RED=$'\033[31m'; GREEN=$'\033[32m'; GRAY=$'\033[90m'; RESET=$'\033[0m'
+else
+  BOLD=; RED=; GREEN=; GRAY=; RESET=
+fi
+
+# ── 모듈명: origin 저장소 이름 기준 (worktree·폴더명 변경과 무관), 없으면 최상위 폴더명 ──
+repo_name="$(git remote get-url origin 2>/dev/null || true)"
+repo_name="${repo_name%/}"; repo_name="${repo_name%.git}"; repo_name="${repo_name##*[/:]}"
+case "$repo_name" in
+  "$PREFIX"*) ;;
+  *) repo_name="$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")" ;;
+esac
+MODULE=""
+case "$repo_name" in "$PREFIX"?*) MODULE="${repo_name#"$PREFIX"}" ;; esac
+
+# ── 메시지 정리: 주석(#) 줄과 verbose 모드의 scissors 아래 diff 제거, CR·끝 공백 제거 ──
+LINES=()
+while IFS= read -r line || [ -n "$line" ]; do
+  line="${line%$'\r'}"
+  case "$line" in
+    "# ------------------------ >8 ------------------------"*) break ;;
+    "#"*) continue ;;
+  esac
+  while [ "${line% }" != "$line" ]; do line="${line% }"; done
+  LINES+=("$line")
+done < "$MSG_FILE"
+
+# 앞쪽 빈 줄 건너뛰고 제목 찾기
+i=0
+while [ $i -lt ${#LINES[@]} ] && [ -z "${LINES[$i]}" ]; do i=$((i + 1)); done
+[ $i -ge ${#LINES[@]} ] && exit 0   # 빈 메시지는 git 이 알아서 중단
+SUBJECT="${LINES[$i]}"
+
+# ── git 이 자동 생성하는 메시지는 검사 제외 ──
+case "$SUBJECT" in
+  "Merge "*|"Revert \""*|"fixup! "*|"squash! "*|"amend! "*) exit 0 ;;
+esac
+
+ERRORS=()
+EXAMPLE_SCOPE="${MODULE:-module}"
+
+# ── 제목 검사 ──
+if printf '%s' "$SUBJECT" | grep -qE "^($TYPES)\([a-z0-9-]+\): [^ ]"; then
+  scope="$(printf '%s' "$SUBJECT" | sed -E 's/^[a-z]+\(([^)]*)\).*/\1/')"
+  if [ -n "$MODULE" ] && [ "$scope" != "$MODULE" ]; then
+    ERRORS+=("제목: 이 저장소($repo_name)의 모듈명은 '$MODULE' 입니다 → '($MODULE)' (입력: '($scope)')")
+  fi
+elif printf '%s' "$SUBJECT" | grep -qE "^[a-zA-Z]+(\([^)]*\))? +:"; then
+  ERRORS+=("제목: 콜론 앞에 공백이 있습니다 → 'type($EXAMPLE_SCOPE): 제목' 처럼 붙여 쓰세요")
+elif printf '%s' "$SUBJECT" | grep -qE "^[a-zA-Z]+(\([^)]*\))?:"; then
+  t="$(printf '%s' "$SUBJECT" | sed -E 's/^([a-zA-Z]+).*/\1/')"
+  if ! printf '%s' "$t" | grep -qE "^($TYPES)$"; then
+    ERRORS+=("제목: 허용되지 않는 type '$t' → ${TYPES//|/, }")
+  elif ! printf '%s' "$SUBJECT" | grep -qE '^[a-zA-Z]+\('; then
+    ERRORS+=("제목: 모듈명이 없습니다 → '$t($EXAMPLE_SCOPE): 제목'")
+  elif printf '%s' "$SUBJECT" | grep -qE '^[a-zA-Z]+\(\)|^[a-zA-Z]+\([^)]*[^a-z0-9)-]'; then
+    ERRORS+=("제목: 모듈명은 atlas-flight- 를 뺀 저장소 이름입니다 → '($EXAMPLE_SCOPE)'")
+  else
+    ERRORS+=("제목: 콜론 뒤에 공백 1칸 후 제목을 쓰세요 → '$t($EXAMPLE_SCOPE): 제목'")
+  fi
+else
+  ERRORS+=("제목: 'type($EXAMPLE_SCOPE): 제목' 형식이 아닙니다")
+fi
+
+if ! printf '%s' "$SUBJECT" | grep -q '[가-힣]'; then
+  ERRORS+=("제목: 한글로 씁니다 (예: '로그인 개발', '~추가', '~변경')")
+fi
+
+case "$SUBJECT" in
+  *.|*,) ERRORS+=("제목: 끝에 마침표(.)·쉼표(,)를 쓰지 않습니다") ;;
+esac
+
+if printf '%s' "$SUBJECT" | grep -qE '(다|요)[.,!]?$'; then
+  ERRORS+=("제목: 서술형 어미 → 명사형으로 끝내세요 (예: '개발했습니다' → '개발')")
+fi
+
+# ── 본문 검사 ──
+next=$((i + 1))
+# 제목 뒤 연속 빈 줄 수 (본문이 있을 때만 정확히 1줄이어야 함)
+k=$next
+while [ $k -lt ${#LINES[@]} ] && [ -z "${LINES[$k]}" ]; do k=$((k + 1)); done
+if [ $k -lt ${#LINES[@]} ]; then
+  blanks=$((k - next))
+  if [ $blanks -eq 0 ]; then
+    ERRORS+=("본문: 제목과 상세 사이에 빈 줄 1줄이 필요합니다")
+  elif [ $blanks -gt 1 ]; then
+    ERRORS+=("본문: 제목과 상세 사이 빈 줄은 1줄만 둡니다 (현재 ${blanks}줄)")
+  fi
+fi
+
+for ((j = next; j < ${#LINES[@]}; j++)); do
+  l="${LINES[$j]}"
+  [ -z "$l" ] && continue
+  # trailer (Co-Authored-By:, Signed-off-by:, Refs: 등) 제외
+  printf '%s' "$l" | grep -qE '^[A-Za-z][A-Za-z-]*: ' && continue
+
+  case "$l" in
+    "- "?*) ;;
+    *) ERRORS+=("본문: 각 줄은 '- ' 로 시작하는 개조식으로 씁니다 → \"$l\"") ;;
+  esac
+  case "$l" in
+    *.|*,) ERRORS+=("본문: 끝에 마침표(.)·쉼표(,)를 쓰지 않습니다 → \"$l\"") ;;
+  esac
+  if printf '%s' "$l" | grep -qE '(다|요)[.,!]?$'; then
+    ERRORS+=("본문: 서술형 어미 → 개조식으로 끝내세요 → \"$l\"")
+  fi
+done
+
+[ ${#ERRORS[@]} -eq 0 ] && exit 0
+
+# ── 실패 안내 ──
+{
+  echo
+  echo "${RED}${BOLD}✗ 커밋 메시지가 규약(docs/commit-convention.md)에 맞지 않습니다${RESET}"
+  echo
+  for e in "${ERRORS[@]}"; do echo "  ${RED}•${RESET} $e"; done
+  echo
+  echo "${GRAY}  입력한 제목: ${SUBJECT}${RESET}"
+  echo
+  echo "  ${GREEN}올바른 예${RESET}"
+  echo "    feat($EXAMPLE_SCOPE): 로그인 개발"
+  echo
+  echo "    - JWT 적용"
+  echo "    - 테스트 코드 추가"
+  echo
+  echo "  ${GRAY}type: ${TYPES//|/, }${RESET}"
+  echo "  ${GRAY}작성한 메시지는 .git/COMMIT_EDITMSG 에 남아 있습니다 (git commit -e -F .git/COMMIT_EDITMSG 로 재사용)${RESET}"
+  echo "  ${GRAY}불가피하게 우회하려면: git commit --no-verify${RESET}"
+  echo
+} >&2
+exit 1
