@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATF 약어 사전</title>
+<style>
+/* Layout: 좁은 문서 폭 한 줄 흐름 — 머리말 → 조합기 → 검색·필터 → 사전 그리드
+   색상: atlas-flight-frontend/src/theme/colors.ts (atlasColors), 라이트 단일 테마 */
+:root{
+  color-scheme: light;
+  --bg:#EEF3F8; --surface:#FFFFFF; --surface-2:#F7FAFC;
+  --ink:#071827; --ink-2:#1C2F42; --ink-3:#50657B;
+  --border:color-mix(in srgb,#06346F 14%,#DCE6F0); --border-strong:color-mix(in srgb,#06346F 35%,#DCE6F0);
+  --formal:#06346F; --formal-soft:#EAF7FF;
+  --draft:color-mix(in srgb,#F5A524 40%,#071827); --draft-soft:color-mix(in srgb,#F5A524 28%,#FFFFFF);
+  --good:color-mix(in srgb,#16A676 50%,#071827); --good-soft:color-mix(in srgb,#16A676 22%,#FFFFFF);
+  --warn:color-mix(in srgb,#E5484D 80%,#071827); --warn-soft:color-mix(in srgb,#E5484D 14%,#FFFFFF);
+  --th:#06346F; --th-ink:#FFFFFF; --th-sub:#D7F0FF; --zebra:#F7FAFC; --row-hover:#D7F0FF;
+  --mark:color-mix(in srgb,#F5A524 45%,#FFFFFF);
+  --sky:color-mix(in srgb,#0A9CFF 45%,#071827); --sky-soft:color-mix(in srgb,#0A9CFF 18%,#FFFFFF);
+  --sans:system-ui,sans-serif;
+  --mono:ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scrollbar-gutter:stable;overflow-y:scroll}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:32px 56px;display:grid;gap:22px}
+@media (max-width:520px){.wrap{padding-inline:16px;padding-block:20px 40px}}
+
+header{display:grid;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--formal)}
+h1{margin:0;font-size:28px;line-height:1.2;font-weight:700;text-wrap:balance}
+.lede{margin:0;color:var(--ink-2);max-width:64ch}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.stat{display:flex;align-items:baseline;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12.5px;color:var(--ink-2)}
+.stat b{font-family:var(--mono);font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;display:grid;gap:12px;min-width:0}
+.panel h2{margin:0;font-size:15px;font-weight:600}
+.panel p{margin:0;color:var(--ink-2);font-size:13px}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.rule{display:grid;gap:4px;padding:12px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border)}
+.rule .k{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.rule .v{font-size:13px}
+
+.builder{display:grid;gap:10px}
+.builder-row{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+input[type=search],input[type=text]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;padding:9px 12px;min-width:0;flex:1 1 260px}
+input:focus-visible,button:focus-visible,label.chk:focus-within{outline:2px solid #0A9CFF;outline-offset:2px}
+.result{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-height:40px;padding:8px 12px;border:1px dashed var(--border-strong);border-radius:6px;background:var(--surface-2);font-family:var(--mono)}
+.result .out{font-size:16px;font-weight:600;color:var(--formal);word-break:break-all}
+.result .hint{font-family:var(--sans);font-size:12.5px;color:var(--ink-3)}
+.tokens{display:flex;flex-wrap:wrap;gap:6px}
+.tok{display:inline-flex;align-items:center;gap:6px;font-size:12px;border:1px solid var(--border);background:var(--surface);border-radius:4px;padding:3px 8px}
+.tok code{font-family:var(--mono);font-weight:600}
+.tok.miss{border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+.tok.multi{border-color:var(--draft);background:var(--draft-soft)}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border-strong);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:13px;border:0;background:transparent;color:var(--ink-2);padding:8px 12px;cursor:pointer;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:#06346F;color:#FFFFFF}
+.seg button .n{font-family:var(--mono);font-size:11.5px;margin-left:4px;opacity:.8}
+label.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2);cursor:pointer;border-radius:4px}
+.list-head{display:flex;align-items:baseline;gap:10px}
+.list-head h2{margin:0;font-size:15px;font-weight:600}
+.count{font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+.grid-wrap{overflow-x:auto;min-height:480px;background:var(--surface);border:1px solid var(--border);border-radius:8px}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:720px;table-layout:fixed}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)}
+th:last-child,td:last-child{border-right:0}
+thead th{position:sticky;top:0;background:var(--th);color:var(--th-ink);font-size:12px;font-weight:600;z-index:1}
+thead th small{display:block;margin-top:2px;font-family:var(--mono);font-weight:400;font-size:10.5px;color:var(--th-sub)}
+tbody tr.row{cursor:pointer}
+tbody tr.row:nth-child(4n+1) td{background:var(--surface)}
+tbody tr.row:nth-child(4n+3) td{background:var(--zebra)}
+tbody tr.row:hover td{background:var(--row-hover)}
+td.word{font-weight:600;word-break:keep-all;overflow-wrap:anywhere}
+td.abbr{overflow-wrap:anywhere}
+.abbr-btn{font-family:var(--mono);font-size:13.5px;font-weight:600;color:var(--formal);background:var(--formal-soft);border:1px solid transparent;border-radius:4px;padding:2px 7px;cursor:copy}
+.abbr-btn:hover{border-color:var(--formal)}
+.abbr-btn.copied{background:var(--good-soft);color:var(--good)}
+td.eng{color:var(--ink-2)}
+td.note{font-size:12.5px;color:var(--ink-2);overflow-wrap:anywhere}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.pill.standard{background:var(--formal-soft);color:var(--formal)}
+.pill.project{background:var(--good-soft);color:var(--good)}
+.pill.aviation{background:var(--sky-soft);color:var(--sky)}
+.pill.exception{background:var(--draft-soft);color:var(--draft)}
+.dict-old{display:block;margin-top:3px;font-family:var(--mono);font-size:11px;color:var(--ink-3);text-decoration:line-through}
+tbody tr.row[aria-expanded=true] td{background:var(--formal-soft)}
+tr.detail td{background:var(--surface);padding:12px 16px 16px;box-shadow:inset 0 8px 8px -8px rgba(6,52,111,.35)}
+tr.detail[hidden]{display:none}
+.dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;font-size:13px;margin:0}
+.dl dt{color:var(--ink-3);font-size:12px}
+.dl dd{margin:0}
+.flag{color:var(--warn);font-weight:600}
+.state{padding:28px;text-align:center;color:var(--ink-3)}
+mark{background:var(--mark);color:inherit;border-radius:2px}
+footer{font-size:12px;color:var(--ink-3);display:grid;gap:4px}
+footer code{font-family:var(--mono)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">atlas-flight · DB 명명</div>
+    <h1>ATF 약어 사전</h1>
+    <p class="lede">테이블·컬럼명을 지을 때 쓰는 단어별 영문 약어입니다. 공통 표준 단어(DICT)에 IATA·ICAO 항공 표준 약어와 프로젝트 도메인 단어를 더했습니다. 표준과 flightway 약어가 다르면 flightway 약어를 따릅니다.</p>
+    <div class="stats" id="stats"><span class="stat">불러오는 중</span></div>
+  </header>
+
+  <section class="panel" aria-labelledby="rules-h">
+    <h2 id="rules-h">조회 순서</h2>
+    <div class="rules">
+      <div class="rule"><span class="k">1 · 예외</span><span class="v">DICT 약어 대신 flightway 약어를 쓰는 단어. 가장 먼저 적용합니다.</span></div>
+      <div class="rule"><span class="k">2 · 프로젝트</span><span class="v">DICT에 없어 프로젝트에서 정의한 항공·운임 단어.</span></div>
+      <div class="rule"><span class="k">3 · 항공 표준</span><span class="v">IATA·ICAO에서 쓰는 예약·발권·운항 약어.</span></div>
+      <div class="rule"><span class="k">4 · 표준</span><span class="v">DICT에서 가져온 공통 표준 단어.</span></div>
+      <div class="rule"><span class="k">5 · 미등재</span><span class="v">임의로 줄이지 않습니다. 후보 약어를 정해 사전에 먼저 추가합니다.</span></div>
+    </div>
+  </section>
+
+  <section class="panel builder" aria-labelledby="builder-h">
+    <h2 id="builder-h">컬럼명 조합</h2>
+    <p>한글 단어를 띄어 쓰면 조회 순서대로 약어를 이어 붙입니다. 접미사 단어(코드, 일시, 여부 등)도 같은 방식으로 찾습니다.</p>
+    <div class="builder-row">
+      <input type="text" id="builder" value="출발 공항 코드" aria-label="조합할 한글 단어" autocomplete="off">
+    </div>
+    <div class="result" aria-live="polite"><span class="out" id="builder-out"></span><span class="hint" id="builder-hint"></span></div>
+    <div class="tokens" id="builder-tokens"></div>
+  </section>
+
+  <section class="grid-section" aria-labelledby="list-h" style="display:grid;gap:12px;min-width:0">
+    <div class="list-head"><h2 id="list-h">사전</h2><span class="count" id="count" aria-live="polite"></span></div>
+    <div class="controls">
+      <input type="search" id="q" placeholder="한글, 약어, 영문, 금칙어로 검색" aria-label="사전 검색" autocomplete="off">
+      <div class="seg" role="group" aria-label="구분 필터" id="seg">
+        <button type="button" data-type="all" aria-pressed="true">전체<span class="n" data-n="all"></span></button>
+        <button type="button" data-type="exception" aria-pressed="false">예외<span class="n" data-n="exception"></span></button>
+        <button type="button" data-type="project" aria-pressed="false">프로젝트<span class="n" data-n="project"></span></button>
+        <button type="button" data-type="aviation" aria-pressed="false">항공 표준<span class="n" data-n="aviation"></span></button>
+        <button type="button" data-type="standard" aria-pressed="false">표준<span class="n" data-n="standard"></span></button>
+      </div>
+      <label class="chk"><input type="checkbox" id="flagged"> 비고 있는 단어만</label>
+    </div>
+    <div class="grid-wrap">
+      <table>
+        <colgroup><col style="width:18%"><col style="width:15%"><col style="width:21%"><col style="width:11%"><col style="width:35%"></colgroup>
+        <thead><tr>
+          <th>한글<small>word</small></th>
+          <th>약어<small>abbr · 눌러서 복사</small></th>
+          <th>영문<small>eng</small></th>
+          <th>구분<small>type</small></th>
+          <th>비고<small>note</small></th>
+        </tr></thead>
+        <tbody id="tbody"><tr><td colspan="5" class="state">약어 사전을 불러오는 중입니다.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <span>원본: <code>atlas-flight-core-lib/docs/db-dictionary.js</code> · 규칙: <code>atlas-flight-core-lib/docs/db-convention.md</code></span>
+    <span>표준 단어 출처: core-data <code>V2__dictionary.sql</code>의 DICT 테이블. 완전 중복과 프로젝트와 무관한 분야의 단어는 제외했습니다.</span>
+  </footer>
+</div>
+
+<script src="atlas-flight-core-lib/docs/db-dictionary.js"></script>
+<script>
+(function(){
+  var TYPE_LABEL = {standard:'표준', aviation:'항공 표준', project:'프로젝트', exception:'예외'};
+  var PRIORITY = {exception:0, project:1, aviation:2, standard:3};
+  var data = [], state = {q:'', type:'all', flagged:false};
+  var $ = function(id){ return document.getElementById(id); };
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function hl(s, q){
+    var t = esc(s); if (!q) return t;
+    var i = String(s).toLowerCase().indexOf(q.toLowerCase());
+    if (i < 0) return t;
+    return esc(s.slice(0,i)) + '<mark>' + esc(s.slice(i, i+q.length)) + '</mark>' + esc(s.slice(i+q.length));
+  }
+
+  function matches(d, q){
+    if (!q) return true;
+    var l = q.toLowerCase();
+    return [d.word, d.abbr, d.eng, d.synonyms, d.forbidden, d.dictAbbr].some(function(v){ return v && v.toLowerCase().indexOf(l) >= 0; });
+  }
+
+  function render(){
+    var q = state.q.trim();
+    var rows = data.filter(function(d){
+      return (state.type === 'all' || d.type === state.type) && (!state.flagged || d.note) && matches(d, q);
+    });
+    $('count').textContent = rows.length.toLocaleString('ko-KR') + '개 표시';
+    var tb = $('tbody');
+    if (!rows.length){
+      tb.innerHTML = '<tr><td colspan="5" class="state">“' + esc(q) + '”에 맞는 단어가 없습니다. 미등재 단어는 임의로 줄이지 말고 사전에 먼저 추가하세요.</td></tr>';
+      return;
+    }
+    var html = [];
+    rows.forEach(function(d, i){
+      var forb = q && d.forbidden && d.forbidden.toLowerCase().indexOf(q.toLowerCase()) >= 0 && d.word.indexOf(q) < 0;
+      html.push(
+        '<tr class="row" data-i="' + data.indexOf(d) + '" aria-expanded="false">' +
+          '<td class="word">' + hl(d.word, q) + (forb ? ' <span class="flag" title="검색어가 이 단어의 금칙어입니다">← 금칙어 “' + esc(q) + '” 대신</span>' : '') + '</td>' +
+          '<td class="abbr"><button type="button" class="abbr-btn" data-copy="' + esc(d.abbr) + '" aria-label="' + esc(d.abbr) + ' 복사">' + hl(d.abbr, q) + '</button>' +
+            (d.dictAbbr ? '<span class="dict-old" title="DICT 원래 약어">DICT ' + esc(d.dictAbbr) + '</span>' : '') + '</td>' +
+          '<td class="eng">' + hl(d.eng, q) + '</td>' +
+          '<td><span class="pill ' + d.type + '">' + TYPE_LABEL[d.type] + '</span></td>' +
+          '<td class="note">' + esc(d.note) + '</td>' +
+        '</tr>' +
+        '<tr class="detail" hidden><td colspan="5"></td></tr>'
+      );
+    });
+    tb.innerHTML = html.join('');
+  }
+
+  function detailHtml(d){
+    var items = [['설명', d.desc], ['DICT 원래 약어', d.dictAbbr], ['이음동의어', d.synonyms], ['금칙어', d.forbidden], ['형식단어', d.formWord === 'Y' ? '예' : (d.formWord === 'N' ? '아니오' : '')], ['도메인 분류', d.domain]];
+    var out = items.filter(function(x){ return x[1]; }).map(function(x){ return '<dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('');
+    return '<dl class="dl">' + (out || '<dt>설명</dt><dd>등록된 설명이 없습니다.</dd>') + '</dl>';
+  }
+
+  function copy(btn){
+    var text = btn.getAttribute('data-copy');
+    var done = function(){ btn.classList.add('copied'); setTimeout(function(){ btn.classList.remove('copied'); }, 900); };
+    try {
+      navigator.clipboard.writeText(text).then(done, function(){ select(btn); });
+    } catch (e) { select(btn); }
+  }
+  function select(el){ var r = document.createRange(); r.selectNodeContents(el); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+  $('tbody').addEventListener('click', function(e){
+    var btn = e.target.closest('.abbr-btn');
+    if (btn){ e.stopPropagation(); copy(btn); return; }
+    var tr = e.target.closest('tr.row'); if (!tr) return;
+    var det = tr.nextElementSibling, open = det.hidden;
+    if (open) det.firstElementChild.innerHTML = detailHtml(data[+tr.getAttribute('data-i')]);
+    det.hidden = !open; tr.setAttribute('aria-expanded', String(open));
+  });
+  $('q').addEventListener('input', function(e){ state.q = e.target.value; render(); });
+  $('flagged').addEventListener('change', function(e){ state.flagged = e.target.checked; render(); });
+  $('seg').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    state.type = b.getAttribute('data-type');
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+    render();
+  });
+
+  // 컬럼명 조합: 단어마다 예외 → 프로젝트 → 표준 순으로 고른다
+  var byWord = {};
+  function lookup(w){
+    var list = (byWord[w] || []).slice().sort(function(a,b){ return PRIORITY[a.type] - PRIORITY[b.type]; });
+    if (!list.length) return null;
+    var top = list.filter(function(x){ return x.type === list[0].type; });
+    return {pick: top[0], options: top};
+  }
+  function build(){
+    var words = $('builder').value.trim().split(/[\s_]+/).filter(Boolean);
+    var parts = [], toks = [], missing = 0, multi = 0;
+    words.forEach(function(w){
+      var r = lookup(w);
+      if (!r){ missing++; parts.push('?'); toks.push('<span class="tok miss">' + esc(w) + ' <code>미등재</code></span>'); return; }
+      parts.push(r.pick.abbr);
+      if (r.options.length > 1){
+        multi++;
+        toks.push('<span class="tok multi" title="같은 한글 단어가 여러 약어로 등재되어 있습니다">' + esc(w) + ' <code>' + r.options.map(function(o){ return esc(o.abbr); }).join(' / ') + '</code> 설명 확인</span>');
+      } else {
+        toks.push('<span class="tok">' + esc(w) + ' <code>' + esc(r.pick.abbr) + '</code> ' + TYPE_LABEL[r.pick.type] + '</span>');
+      }
+    });
+    $('builder-out').textContent = parts.join('_');
+    $('builder-tokens').innerHTML = toks.join('');
+    $('builder-hint').textContent = !words.length ? '단어를 입력하세요.' :
+      missing ? '미등재 단어 ' + missing + '개 — 사전에 먼저 추가하세요.' :
+      multi ? '약어가 여러 개인 단어가 있습니다. 설명을 확인하세요.' : '';
+  }
+  $('builder').addEventListener('input', build);
+
+  if (!Array.isArray(window.ATF_DICTIONARY)){
+    $('stats').innerHTML = '<span class="stat">불러오기 실패</span>';
+    $('tbody').innerHTML = '<tr><td colspan="5" class="state">db-dictionary.js를 불러오지 못했습니다. 워크스페이스 루트 아래에 atlas-flight-core-lib/docs/db-dictionary.js가 있는지 확인하세요. core-lib 모듈을 clone해야 합니다.</td></tr>';
+    return;
+  }
+  (function(){
+    data = window.ATF_DICTIONARY;
+    data.forEach(function(d){ (byWord[d.word] = byWord[d.word] || []).push(d); });
+    var n = {all: data.length, standard:0, aviation:0, project:0, exception:0};
+    data.forEach(function(d){ n[d.type]++; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-n]'), function(el){ el.textContent = n[el.getAttribute('data-n')].toLocaleString('ko-KR'); });
+    var flagged = data.filter(function(d){ return d.note; }).length;
+    $('stats').innerHTML =
+      '<span class="stat"><b>' + n.all.toLocaleString('ko-KR') + '</b>단어</span>' +
+      '<span class="stat"><b>' + n.exception + '</b>예외</span>' +
+      '<span class="stat"><b>' + n.project + '</b>프로젝트</span>' +
+      '<span class="stat"><b>' + n.aviation + '</b>항공 표준</span>' +
+      '<span class="stat"><b>' + n.standard.toLocaleString('ko-KR') + '</b>표준</span>' +
+      '<span class="stat"><b>' + flagged + '</b>비고 있음</span>';
+    render(); build();
+  })();
+})();
+</script>
+</body>
+</html>
