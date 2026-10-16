@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
 # sync.sh — 모든 모듈을 현재 활성화된 브랜치 기준으로 동기화
-#   대상: 스크립트 위치에서 atlas-flight-* 폴더 중 git 저장소인 것 (SYNC_PREFIX 로 접두사 변경 가능)
+#   대상: 워크스페이스 메타 레포(스크립트 위치) + atlas-flight-* 폴더 중 git 저장소인 것
+#         (SYNC_PREFIX 로 접두사 변경 가능)
 #   각 저장소마다:
 #     1) fetch --all --prune  → 새 브랜치 반영 + 삭제된 원격 브랜치 정리(브랜치 목록 최신화)
 #     2) pull --ff-only       → 현재 브랜치를 빨리 감기로만 갱신(머지 커밋 방지)
@@ -10,6 +11,10 @@
 # 한 모듈이 실패해도 나머지는 계속 진행하고, 마지막에 요약을 출력한다.
 
 set -uo pipefail
+
+# 본문 전체를 { } 로 감싸 먼저 끝까지 읽어 둔다.
+# 메타 레포 pull 로 이 파일이 바뀌어도 실행 중인 스크립트가 깨지지 않는다.
+{
 
 # 스크립트 위치를 기준으로 동작 (어디서 실행하든 동일하게 동작)
 cd "$(dirname "$0")"
@@ -23,11 +28,18 @@ else
   BOLD=; DIM=; RESET=; RED=; GREEN=; YELLOW=; BLUE=; CYAN=; GRAY=
 fi
 
-# ── 모듈 탐색: 접두사로 시작하는 폴더 중 git 저장소만 대상 ─────────
+# ── 모듈 탐색: 메타 레포 + 접두사로 시작하는 폴더 중 git 저장소만 대상 ─
 # 메타 레포 자체가 git 저장소라 rev-parse 는 하위 폴더도 참으로 판정하므로,
 # 폴더 바로 아래 .git 존재 여부로 판별한다 (worktree 의 .git 파일도 인정).
 PREFIX="${SYNC_PREFIX:-atlas-flight-}"
 MODULES=(); EXCLUDED=()
+
+# 메타 레포는 경로 "." 로 넣고, 표시명은 origin 저장소명(없으면 폴더명)을 쓴다
+[ -e .git ] && MODULES+=(".")
+WORKSPACE_NAME="$(basename -s .git "$(git remote get-url origin 2>/dev/null)" 2>/dev/null)"
+[ -n "$WORKSPACE_NAME" ] || WORKSPACE_NAME="$(basename "$(pwd)")"
+display_name() { [ "$1" = "." ] && echo "$WORKSPACE_NAME" || echo "$1"; }
+
 for p in "$PREFIX"*/; do
   [ -d "$p" ] || continue
   p="${p%/}"
@@ -58,7 +70,8 @@ print_header() {
 }
 
 for d in "${MODULES[@]}"; do
-  print_header "$d"
+  name="$(display_name "$d")"
+  print_header "$name"
 
   branch="$(git -C "$d" rev-parse --abbrev-ref HEAD 2>/dev/null)"
   printf "  ${GRAY}브랜치${RESET}  ${CYAN}%s${RESET}\n" "$branch"
@@ -100,7 +113,7 @@ for d in "${MODULES[@]}"; do
       git -C "$d" branch --set-upstream-to="origin/$branch" "$branch" >/dev/null
     else
       printf "  ${YELLOW}⚠ origin/%s 없음 — pull 생략${RESET}\n" "$branch"
-      S_NAME+=("$d"); S_BRANCH+=("$branch"); S_KIND+=("SKIP"); S_NOTE+=("원격 없음 $note")
+      S_NAME+=("$name"); S_BRANCH+=("$branch"); S_KIND+=("SKIP"); S_NOTE+=("원격 없음 $note")
       ((n_skip++))
       continue
     fi
@@ -113,15 +126,15 @@ for d in "${MODULES[@]}"; do
     if echo "$out" | grep -qE "Fast-forward|Updating|업데이트 중"; then
       files=$(echo "$out" | grep -cE '\|')
       printf "${GREEN}⬆ 업데이트됨${RESET} ${DIM}(%s개 파일)${RESET}\n" "$files"
-      S_NAME+=("$d"); S_BRANCH+=("$branch"); S_KIND+=("UPDATED"); S_NOTE+=("$note")
+      S_NAME+=("$name"); S_BRANCH+=("$branch"); S_KIND+=("UPDATED"); S_NOTE+=("$note")
     else
       printf "${DIM}이미 최신${RESET}\n"
-      S_NAME+=("$d"); S_BRANCH+=("$branch"); S_KIND+=("OK"); S_NOTE+=("$note")
+      S_NAME+=("$name"); S_BRANCH+=("$branch"); S_KIND+=("OK"); S_NOTE+=("$note")
     fi
     ((n_ok++))
   else
     printf "${RED}✖ 실패 (충돌/비-FF — 수동 확인 필요)${RESET}\n"
-    S_NAME+=("$d"); S_BRANCH+=("$branch"); S_KIND+=("FAIL"); S_NOTE+=("$note")
+    S_NAME+=("$name"); S_BRANCH+=("$branch"); S_KIND+=("FAIL"); S_NOTE+=("$note")
     ((n_fail++))
   fi
 done
@@ -155,3 +168,5 @@ printf "  ${DIM}%s${RESET}\n" "────────────────�
 printf "  ${GREEN}%d 성공${RESET} ${DIM}·${RESET} ${RED}%d 실패${RESET} ${DIM}·${RESET} ${YELLOW}%d 건너뜀${RESET}   ${DIM}|${RESET}   ${GREEN}🌱 신규 %d${RESET} ${DIM}·${RESET} ${RED}🗑 삭제 %d${RESET}\n" \
   "$n_ok" "$n_fail" "$n_skip" "$n_added" "$n_removed"
 echo
+exit 0
+}
