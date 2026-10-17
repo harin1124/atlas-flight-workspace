@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # commit-msg — 커밋 메시지가 docs/commit-convention.md 규약을 따르는지 검사
-#   설치: scripts/install-git-hooks.sh (메타 레포 + 모든 atlas-flight-* 모듈의 core.hooksPath 설정)
+#   설치: scripts/install-git-hooks.sh (워크스페이스 레포 + 모든 atlas-flight-* 모듈의 core.hooksPath 설정)
 #   우회: git commit --no-verify
 #
 # 형식
@@ -12,7 +12,7 @@
 #
 # 검사 항목
 #   1) 제목 형식  type(module): 제목   (type 은 허용 목록 중 하나, 콜론 뒤 공백 1칸)
-#   2) module 은 현재 저장소 이름에서 atlas-flight- 를 뺀 값 (메타 레포는 workspace)
+#   2) module 은 현재 저장소 이름에서 atlas-flight- 를 뺀 값 (워크스페이스 레포는 workspace)
 #   3) 제목에 한글 포함
 #   4) 모든 줄 끝에 마침표(.)·쉼표(,) 금지
 #   5) 제목·본문의 서술형 어미(~다, ~요) 금지 — 개조식 여부는 휴리스틱으로 명백한 서술형만 잡는다

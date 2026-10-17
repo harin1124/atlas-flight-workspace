@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # sync-report.sh — sync.sh 를 실행하고, 모듈별로 새로 들어온 커밋 메시지를 모아 출력한다.
-#   1) 실행 전 각 모듈(메타 레포 포함)의 HEAD 를 기록
+#   1) 실행 전 각 모듈(워크스페이스 레포 포함)의 HEAD 를 기록
 #   2) 프로젝트 루트의 sync.sh 실행 (출력은 그대로 전달)
 #   3) HEAD 가 바뀐 모듈: <이전>..HEAD 커밋 (제목+본문, 머지 커밋 제외)
 #      pull 하지 못한 모듈: HEAD..@{u} 의 아직 받지 못한 커밋
@@ -11,7 +11,7 @@
 set -uo pipefail
 
 # 본문 전체를 { } 로 감싸 먼저 끝까지 읽어 둔다.
-# 메타 레포 pull 로 이 파일이 바뀌어도 실행 중인 스크립트가 깨지지 않는다.
+# 워크스페이스 레포 pull 로 이 파일이 바뀌어도 실행 중인 스크립트가 깨지지 않는다.
 {
 
 # 스킬 폴더(.claude/skills/sync-all) 기준으로 프로젝트 루트로 이동
@@ -19,7 +19,7 @@ cd "$(dirname "$0")/../../.."
 
 PREFIX="${SYNC_PREFIX:-atlas-flight-}"
 
-# 메타 레포 표시명 — sync.sh 와 같은 규칙 (origin 저장소명, 없으면 폴더명)
+# 워크스페이스 레포 표시명 — sync.sh 와 같은 규칙 (origin 저장소명, 없으면 폴더명)
 WORKSPACE_NAME="$(basename -s .git "$(git remote get-url origin 2>/dev/null)" 2>/dev/null)"
 [ -n "$WORKSPACE_NAME" ] || WORKSPACE_NAME="$(basename "$(pwd)")"
 display_name() { [ "$1" = "." ] && echo "$WORKSPACE_NAME" || echo "$1"; }

@@ -1,6 +1,6 @@
 # 커밋 메시지 컨벤션
 
-워크스페이스 메타 레포와 하위 모든 모듈(`atlas-flight-*`)에 공통으로 적용한다.
+워크스페이스 레포와 하위 모든 모듈(`atlas-flight-*`)에 공통으로 적용한다.
 
 ## 1. 기본 형식
 
@@ -14,7 +14,7 @@ type(module): 한글 명사형 제목
 | 항목 | 규칙 |
 |------|------|
 | 제목 | `type(module): 제목`. 제목은 한글 **명사형**으로 끝낸다 (`~개발`, `~추가`, `~변경`, `~수정`, `~정정`) |
-| module | 필수. 커밋하는 저장소 이름에서 `atlas-flight-` 를 뺀 값 (`auth`, `customer`, `core-lib` …). 메타 레포는 `workspace` |
+| module | 필수. 커밋하는 저장소 이름에서 `atlas-flight-` 를 뺀 값 (`auth`, `customer`, `core-lib` …). 워크스페이스 레포는 `workspace` |
 | 상세 | 제목 다음 **빈 줄 정확히 1줄** 후, 모든 줄을 `- ` 로 시작하는 **개조식**으로 쓴다. "~한다", "~했습니다" 같은 서술형은 쓰지 않는다 |
 | 줄 끝 | 제목·상세 모든 줄 끝에 마침표(`.`)·쉼표(`,`)를 쓰지 않는다 |
 | 짧은 커밋 | 변경이 하나면 제목만으로 충분하다 |
@@ -92,7 +92,7 @@ JWT를 적용했다.
 `scripts/git-hooks/commit-msg` 가 커밋 시점에 이 규약을 검사하고, 어긋나면 사유와 함께 커밋을 거부한다. 쉘·IDE·Claude 등 커밋 경로와 무관하게 동작한다.
 
 ```bash
-./scripts/install-git-hooks.sh              # 메타 레포 + 모든 atlas-flight-* 모듈에 설치 (clone 후 1회)
+./scripts/install-git-hooks.sh              # 워크스페이스 레포 + 모든 atlas-flight-* 모듈에 설치 (clone 후 1회)
 ./scripts/install-git-hooks.sh --uninstall  # 해제
 ```
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# install-git-hooks.sh — 메타 레포와 모든 모듈에 공용 git 훅(scripts/git-hooks) 적용
-#   대상: 메타 레포 + 스크립트 상위 폴더의 atlas-flight-* 중 git 저장소 (HOOKS_PREFIX 로 접두사 변경 가능)
+# install-git-hooks.sh — 워크스페이스 레포와 모든 모듈에 공용 git 훅(scripts/git-hooks) 적용
+#   대상: 워크스페이스 레포 + 스크립트 상위 폴더의 atlas-flight-* 중 git 저장소 (HOOKS_PREFIX 로 접두사 변경 가능)
 #   방식: 각 저장소의 로컬 core.hooksPath 를 scripts/git-hooks 절대 경로로 설정
 #         → 훅 수정 시 재설치 없이 모든 저장소에 즉시 반영
 #
@@ -23,7 +23,7 @@ fi
 
 chmod +x "$HOOKS_DIR"/*
 
-# 메타 레포 판별과 동일하게 폴더 바로 아래 .git 존재 여부로 판별 (sync.sh 참고)
+# 워크스페이스 레포 판별과 동일하게 폴더 바로 아래 .git 존재 여부로 판별 (sync.sh 참고)
 REPOS=(".")
 for p in "$PREFIX"*/; do
   [ -d "$p" ] || continue

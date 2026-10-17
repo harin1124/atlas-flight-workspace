@@ -1,12 +1,12 @@
 ---
 name: sync-all
-description: 워크스페이스 메타 레포와 모든 모듈(atlas-flight-* git 저장소)을 현재 브랜치 기준으로 pull + 브랜치 목록 최신화하고, 새로 들어온 커밋 메시지를 바탕으로 모듈별 업데이트 내용을 요약한다. "싱크", "전체 pull", "모듈 동기화", "뭐 업데이트됐는지 알려줘" 같은 요청에 사용한다.
+description: 워크스페이스 레포와 모든 모듈(atlas-flight-* git 저장소)을 현재 브랜치 기준으로 pull + 브랜치 목록 최신화하고, 새로 들어온 커밋 메시지를 바탕으로 모듈별 업데이트 내용을 요약한다. "싱크", "전체 pull", "모듈 동기화", "뭐 업데이트됐는지 알려줘" 같은 요청에 사용한다.
 allowed-tools: Bash(./.claude/skills/sync-all/sync-report.sh)
 ---
 
 # 모듈 동기화 + 업데이트 요약
 
-프로젝트 루트의 `sync.sh`를 실행하고, 실행 전후 HEAD를 비교해 모듈별로(메타 레포 `atlas-flight-workspace` 포함) 새로 들어온 커밋을 모은 결과다.
+프로젝트 루트의 `sync.sh`를 실행하고, 실행 전후 HEAD를 비교해 모듈별로(워크스페이스 레포 `atlas-flight-workspace` 포함) 새로 들어온 커밋을 모은 결과다.
 (`sync.sh`는 이 스킬과 별개로 사람이 직접 `./sync.sh`로 실행해도 된다.)
 
 !`./.claude/skills/sync-all/sync-report.sh`

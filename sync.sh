@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # sync.sh — 모든 모듈을 현재 활성화된 브랜치 기준으로 동기화
-#   대상: 워크스페이스 메타 레포(스크립트 위치) + atlas-flight-* 폴더 중 git 저장소인 것
+#   대상: 워크스페이스 레포(스크립트 위치) + atlas-flight-* 폴더 중 git 저장소인 것
 #         (SYNC_PREFIX 로 접두사 변경 가능)
 #   각 저장소마다:
 #     1) fetch --all --prune  → 새 브랜치 반영 + 삭제된 원격 브랜치 정리(브랜치 목록 최신화)
@@ -13,7 +13,7 @@
 set -uo pipefail
 
 # 본문 전체를 { } 로 감싸 먼저 끝까지 읽어 둔다.
-# 메타 레포 pull 로 이 파일이 바뀌어도 실행 중인 스크립트가 깨지지 않는다.
+# 워크스페이스 레포 pull 로 이 파일이 바뀌어도 실행 중인 스크립트가 깨지지 않는다.
 {
 
 # 스크립트 위치를 기준으로 동작 (어디서 실행하든 동일하게 동작)
@@ -28,13 +28,13 @@ else
   BOLD=; DIM=; RESET=; RED=; GREEN=; YELLOW=; BLUE=; CYAN=; GRAY=
 fi
 
-# ── 모듈 탐색: 메타 레포 + 접두사로 시작하는 폴더 중 git 저장소만 대상 ─
-# 메타 레포 자체가 git 저장소라 rev-parse 는 하위 폴더도 참으로 판정하므로,
+# ── 모듈 탐색: 워크스페이스 레포 + 접두사로 시작하는 폴더 중 git 저장소만 대상 ─
+# 워크스페이스 레포 자체가 git 저장소라 rev-parse 는 하위 폴더도 참으로 판정하므로,
 # 폴더 바로 아래 .git 존재 여부로 판별한다 (worktree 의 .git 파일도 인정).
 PREFIX="${SYNC_PREFIX:-atlas-flight-}"
 MODULES=(); EXCLUDED=()
 
-# 메타 레포는 경로 "." 로 넣고, 표시명은 origin 저장소명(없으면 폴더명)을 쓴다
+# 워크스페이스 레포는 경로 "." 로 넣고, 표시명은 origin 저장소명(없으면 폴더명)을 쓴다
 [ -e .git ] && MODULES+=(".")
 WORKSPACE_NAME="$(basename -s .git "$(git remote get-url origin 2>/dev/null)" 2>/dev/null)"
 [ -n "$WORKSPACE_NAME" ] || WORKSPACE_NAME="$(basename "$(pwd)")"
